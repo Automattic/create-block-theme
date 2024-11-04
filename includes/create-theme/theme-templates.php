@@ -320,9 +320,9 @@ class CBT_Theme_Templates {
 			}
 		}
 
-		// remove taxQuery attribute from query blocks
-		if ( 'core/query' === $block['blockName'] ) {
-			if ( isset( $block['attrs']['query']['taxQuery'] ) ) {
+		// (optionally) remove taxQuery attribute from query blocks
+		if ( 'core/query' === $block['blockName'] && isset( $block['attrs']['query']['taxQuery'] ) ) {
+			if ( ! $options || ( array_key_exists( 'removeTaxQuery', $options ) && $options['removeTaxQuery'] ) ) {
 				unset( $block['attrs']['query']['taxQuery'] );
 			}
 		}
