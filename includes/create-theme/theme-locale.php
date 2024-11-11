@@ -122,6 +122,33 @@ class CBT_Theme_Locale {
 		}
 	}
 
+	/**
+	 * Localize JSON attributes of a block.
+	 *
+	 * @param array $block The block to localize.
+	 * @return array The localized block.
+	 */
+	private static function localize_block_json_attributes( $block ) {
+		switch ( $block['blockName'] ) {
+			case 'core/search':
+				$translatable_attrs = array(
+					'label',
+					'placeholder',
+					'buttonText',
+				);
+				foreach ( $translatable_attrs as $attr ) {
+					if ( isset( $block['attrs'][ $attr ] ) ) {
+						$block['attrs'][ $attr ] = self::escape_text_content( $block['attrs'][ $attr ] );
+					}
+				}
+				break;
+			default:
+				break;
+		}
+
+		return $block;
+	}
+
 	/*
 	 * Localize text in text blocks.
 	 *
@@ -134,6 +161,11 @@ class CBT_Theme_Locale {
 			// Recursively escape the inner blocks.
 			if ( ! empty( $block['innerBlocks'] ) ) {
 				$block['innerBlocks'] = self::escape_text_content_of_blocks( $block['innerBlocks'] );
+			}
+
+			// Localize the JSON attributes of the block.
+			if ( ! empty( $block['attrs'] ) ) {
+				$block['attrs'] = self::localize_block_json_attributes( $block )['attrs'];
 			}
 
 			/*

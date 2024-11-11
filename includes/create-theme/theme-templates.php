@@ -84,6 +84,16 @@ class CBT_Theme_Templates {
 		// This replaces that with dashes again. We should consider decoding the entire string but that is proving difficult.
 		$template->content = str_replace( '\u002d', '-', $template->content );
 
+		// $character_map = array(
+		// 	'\u002d', '-',
+		// 	'\u003e', '>',
+		// 	'\u003c', '<',
+		// );
+		
+		// foreach ( $character_map as $encoded_char => $decoded_char ) {
+		// 	$template->content = str_replace( $encoded_char, $decoded_char, $template->content );
+		// }
+
 		return $template;
 	}
 
