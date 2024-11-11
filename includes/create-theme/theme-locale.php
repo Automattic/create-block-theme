@@ -101,10 +101,6 @@ class CBT_Theme_Locale {
 				return array( '/(<pre[^>]*>)(.*?)(<\/pre>)/' );
 			case 'core/button':
 				return array( '/(<a[^>]*>)(.*?)(<\/a>)/' );
-			case 'core/image':
-			case 'core/cover':
-			case 'core/media-text':
-				return array( '/alt="(.*?)"/' );
 			case 'core/quote':
 			case 'core/pullquote':
 				return array(
@@ -117,6 +113,16 @@ class CBT_Theme_Locale {
 					'/(<th[^>]*>)(.*?)(<\/th>)/',
 					'/(<figcaption[^>]*>)(.*?)(<\/figcaption>)/',
 				);
+			case 'core/video':
+				return array( '/(<figcaption[^>]*>)(.*?)(<\/figcaption>)/' );
+			case 'core/image':
+				return array(
+					'/(<figcaption[^>]*>)(.*?)(<\/figcaption>)/',
+					'/(alt=")(.*?)(")/',
+				);
+			case 'core/cover':
+			case 'core/media-text':
+				return array( '/(alt=")(.*?)(")/' );
 			default:
 				return null;
 		}
@@ -158,19 +164,7 @@ class CBT_Theme_Locale {
 				case 'core/quote':
 				case 'core/pullquote':
 				case 'core/table':
-					$replace_content_callback = function ( $content, $pattern ) {
-						if ( empty( $content ) ) {
-							return;
-						}
-						return preg_replace_callback(
-							$pattern,
-							function( $matches ) {
-								return $matches[1] . self::escape_text_content( $matches[2] ) . $matches[3];
-							},
-							$content
-						);
-					};
-					break;
+				case 'core/video':
 				case 'core/image':
 				case 'core/cover':
 				case 'core/media-text':
@@ -181,7 +175,11 @@ class CBT_Theme_Locale {
 						return preg_replace_callback(
 							$pattern,
 							function( $matches ) {
-								return 'alt="' . self::escape_attribute( $matches[1] ) . '"';
+								// If the pattern is for attribute like alt="".
+								if ( str_ends_with( $matches[1], '="' ) ) {
+									return $matches[1] . self::escape_attribute( $matches[2] ) . $matches[3];
+								}
+								return $matches[1] . self::escape_text_content( $matches[2] ) . $matches[3];
 							},
 							$content
 						);

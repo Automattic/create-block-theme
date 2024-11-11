@@ -125,12 +125,12 @@ class CBT_Theme_Locale_EscapeTextContentOfBlocks extends CBT_Theme_Locale_UnitTe
 
 			'image'                      => array(
 				'block_markup'    =>
-					'<!-- wp:image {"sizeSlug":"large","linkDestination":"none","className":"is-style-rounded"} -->
-                    <figure class="wp-block-image size-large is-style-rounded"><img src="http://localhost/wp1/wp-content/themes/twentytwentyfour/assets/images/windows.webp" alt="Windows of a building in Nuremberg, Germany"/></figure>
+					'<!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
+                    <figure class="wp-block-image size-large"><img src="http://example.org/image.webp" alt="image alt text" class="wp-image-151"/><figcaption class="wp-element-caption">Image caption</figcaption></figure>
                     <!-- /wp:image -->',
 				'expected_markup' =>
-					'<!-- wp:image {"sizeSlug":"large","linkDestination":"none","className":"is-style-rounded"} -->
-                    <figure class="wp-block-image size-large is-style-rounded"><img src="http://localhost/wp1/wp-content/themes/twentytwentyfour/assets/images/windows.webp" alt="<?php esc_attr_e(\'Windows of a building in Nuremberg, Germany\', \'test-locale-theme\');?>"/></figure>
+					'<!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->
+                    <figure class="wp-block-image size-large"><img src="http://example.org/image.webp" alt="<?php esc_attr_e(\'image alt text\', \'test-locale-theme\');?>" class="wp-image-151"/><figcaption class="wp-element-caption"><?php esc_html_e(\'Image caption\', \'test-locale-theme\');?></figcaption></figure>
                     <!-- /wp:image -->',
 			),
 
@@ -186,6 +186,15 @@ class CBT_Theme_Locale_EscapeTextContentOfBlocks extends CBT_Theme_Locale_UnitTe
                     <!-- /wp:table -->',
 			),
 
+			'video'                      => array(
+				'block_markup'    => '<!-- wp:video -->
+<figure class="wp-block-video"><video controls src="http://example.org/video.mp4"></video><figcaption class="wp-element-caption">Video caption test</figcaption></figure>
+<!-- /wp:video -->',
+				'expected_markup' =>
+					'<!-- wp:video -->
+<figure class="wp-block-video"><video controls src="http://example.org/video.mp4"></video><figcaption class="wp-element-caption"><?php esc_html_e(\'Video caption test\', \'test-locale-theme\');?></figcaption></figure>
+<!-- /wp:video -->',
+			),
 		);
 	}
 }
