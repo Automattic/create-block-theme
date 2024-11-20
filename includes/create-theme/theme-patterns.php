@@ -30,12 +30,14 @@ class CBT_Theme_Patterns {
 		$pattern_category_list = get_the_terms( $pattern->id, 'wp_pattern_category' );
 		$pattern->categories   = ! empty( $pattern_category_list ) ? join( ', ', wp_list_pluck( $pattern_category_list, 'name' ) ) : '';
 		$pattern->sync_status  = get_post_meta( $pattern->id, 'wp_pattern_sync_status', true );
+		$pattern->is_synced    = $pattern->sync_status === 'unsynced' ? 'no' : 'yes';
 		$pattern->content      = <<<PHP
 		<?php
 		/**
 		 * Title: {$pattern->title}
 		 * Slug: {$pattern->slug}
 		 * Categories: {$pattern->categories}
+		 * Synced: {$pattern->is_synced}
 		 */
 		?>
 		{$pattern_post->post_content}
@@ -72,38 +74,25 @@ class CBT_Theme_Patterns {
 	}
 
 	public static function replace_local_synced_pattern_references( $pattern ) {
-		// Find any references to pattern in templates
-		$templates_to_update = array();
-		$args                = array(
-			'post_type'      => array( 'wp_template', 'wp_template_part' ),
-			'posts_per_page' => -1,
-			's'              => 'wp:block {"ref":' . $pattern->id . '}',
-		);
-		$find_pattern_refs   = new WP_Query( $args );
-		if ( $find_pattern_refs->have_posts() ) {
-			foreach ( $find_pattern_refs->posts as $post ) {
-				$slug = $post->post_name;
-				array_push( $templates_to_update, $slug );
-			}
-		}
-		$templates_to_update = array_unique( $templates_to_update );
 
-		// Only update templates that reference the pattern
-		CBT_Theme_Templates::add_templates_to_local( 'all', null, null, $options, $templates_to_update );
+		// If we save patterns we have to update the templates (or none of the templates).
+		CBT_Theme_Templates::add_templates_to_local( 'all', null, null, null );
 
 		// List all template and pattern files in the theme
 		$base_dir       = get_stylesheet_directory();
 		$patterns       = glob( $base_dir . DIRECTORY_SEPARATOR . 'patterns' . DIRECTORY_SEPARATOR . '*.php' );
+		$synced_patterns = glob( $base_dir . DIRECTORY_SEPARATOR . 'synced-patterns' . DIRECTORY_SEPARATOR . '*.php' );
 		$templates      = glob( $base_dir . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . '*.html' );
 		$template_parts = glob( $base_dir . DIRECTORY_SEPARATOR . 'template-parts' . DIRECTORY_SEPARATOR . '*.html' );
 
 		// Replace references to the local patterns in the theme
-		foreach ( array_merge( $patterns, $templates, $template_parts ) as $file ) {
+		foreach ( array_merge( $patterns, $templates, $template_parts, $synced_patterns ) as $file ) {
 			$file_content = file_get_contents( $file );
 			$file_content = str_replace( 'wp:block {"ref":' . $pattern->id . '}', 'wp:pattern {"slug":"' . $pattern->slug . '"}', $file_content );
 			file_put_contents( $file, $file_content );
 		}
 
+		// if we clear the template customizations for all templates then we have to SAVE all templates.
 		CBT_Theme_Templates::clear_user_templates_customizations();
 		CBT_Theme_Templates::clear_user_template_parts_customizations();
 	}
@@ -166,7 +155,7 @@ class CBT_Theme_Patterns {
 
 	public static function add_synced_pattern_to_theme($pattern)
 	{
-		$patterns_dir = get_stylesheet_directory() . DIRECTORY_SEPARATOR . 'synced-patterns' . DIRECTORY_SEPARATOR;
+		$patterns_dir = get_stylesheet_directory() . DIRECTORY_SEPARATOR . 'patterns' . DIRECTORY_SEPARATOR;
 		$pattern_file = $patterns_dir . $pattern->name . '.php';
 
 		// If there is no patterns folder, create it.
@@ -181,8 +170,7 @@ class CBT_Theme_Patterns {
 		self::replace_local_synced_pattern_references($pattern);
 
 		// Remove it from the database to ensure that these patterns are loaded from the theme.
-		// Don't remove it... we want to keep the synced patterns in the database too.
-		// wp_delete_post($pattern->id, true);
+		wp_delete_post($pattern->id, true);
 	}
 
 	public static function add_unsynced_pattern_to_theme($pattern)
