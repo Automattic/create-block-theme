@@ -3,6 +3,9 @@
 	"port": 8988,
 	"testsPort": 8989,
 	"plugins": [ "." ],
+	"mappings": {
+		"wp-content/themes": "./dev-env/themes"
+	},
 	"config": {
 		"WP_UPLOAD_MAX_FILESIZE": "128M",
 		"WP_MEMORY_LIMIT": "256M"

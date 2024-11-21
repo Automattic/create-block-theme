@@ -74,6 +74,30 @@ class CBT_Plugin
 	}
 }
 
+function CBT_register_theme_synced_block_patterns() {
+
+	$patterns = CBT_get_theme_block_patterns();
+
+	// Just synced patterns
+	$patterns = array_filter($patterns, function ($pattern) {
+		return $pattern['synced'] === 'yes';
+	});
+
+	foreach ($patterns as $pattern) {
+
+		// $post_id = post_exists($pattern['slug'], '', '', 'wp_block');
+
+		// register_block_pattern($pattern['slug'], array(
+		// 	'title' => $pattern['title']['raw'],
+		// 	'content' => $pattern['content']['raw'],
+		// 	'description' => $pattern['excerpt']['raw'],
+		// 	'categories' => $pattern['wp_pattern_category'],
+		// 	'keywords' => $pattern['title']['raw'],
+		// 	'inserter' => false,
+		// ));
+	}
+}
+
 function CBT_render_pattern($pattern_file) {
 	ob_start();
 	include $pattern_file;
@@ -117,38 +141,39 @@ function CBT_get_theme_block_patterns()
 
 			$pattern_data = get_file_data( $pattern_file, $default_headers );
 
-			if ($registry->is_registered($pattern_data['slug'])) {
-				continue;
-			}
-
+			$pattern_data['pattern_file'] = $pattern_file;
 			$pattern_data['content'] = CBT_render_pattern($pattern_file);
 
-			$all_patterns[] = array(
-				'id' => '8888' . crc32($pattern_data['slug']),
-				'file_path' => $pattern_file,
-				'slug' => $pattern_data['slug'] ?? null,
-				'status' => 'publish',
-				'type' => 'wp_block',
-				'title' => array(
-					'raw' => $pattern_data['title'] ?? null,
-				),
-				'content' => array(
-					'raw' => $pattern_data['content'] ?? null,
-					'protected' => false,
-					'block_version' => null,
-				),
-				'excerpt' => array(
-					'raw' => $pattern_data['description'] ?? null,
-					'rendered' => null,
-					'protected' => false,
-				),
-				'wp_pattern_category' => array(),
-				'wp_pattern_sync_status' => $pattern_data['synced'] === 'yes' ? "" : "unsynced",
-			);;
+			$all_patterns[] = $pattern_data;
 		}
 	}
 
 	return $all_patterns;
+}
+
+function format_pattern_for_response( $pattern_data ) {
+	return array(
+		'id' => 'CBT_' . $pattern_data['slug'],
+		'file_path' => $pattern_data['pattern_file'],
+		'slug' => $pattern_data['slug'] ?? null,
+		'status' => 'publish',
+		'type' => 'wp_block',
+		'title' => array(
+			'raw' => $pattern_data['title'] ?? null,
+		),
+		'content' => array(
+			'raw' => $pattern_data['content'] ?? null,
+			'protected' => false,
+			'block_version' => null,
+		),
+		'excerpt' => array(
+			'raw' => $pattern_data['description'] ?? null,
+			'rendered' => null,
+			'protected' => false,
+		),
+		'wp_pattern_category' => array(),
+		'wp_pattern_sync_status' => $pattern_data['synced'] === 'yes' ? "" : "unsynced",
+	);
 }
 
 // Add in the block patterns from the theme to the collection of blocks
@@ -160,6 +185,13 @@ function CBT_filter_blocks_api_response($response, $server, $request)
 
 	$data = $response->get_data();
 	$patterns = CBT_get_theme_block_patterns();
+
+	// filter out the synced patterns
+	$patterns = array_filter($patterns, function ($pattern) {
+		return $pattern['synced'] !== 'yes';
+	});
+
+	$patterns = array_map( 'format_pattern_for_response', $patterns);
 
 	$response->set_data(array_merge($data, $patterns));
 
@@ -176,53 +208,49 @@ function CBT_filter_block_update($result, $server, $request)
 	}
 
 
-	if ( ! str_contains($route, '8888')) {
+	if ( ! str_contains($route, 'CBT_')) {
 		return $result;
 	}
 
 
-	$encoded_pattern_slug = (int)ltrim(strstr($route, '8888'), '8888');
+	$pattern_slug = ltrim(strstr($route, 'CBT_'), 'CBT_');
 	$theme_patterns = CBT_get_theme_block_patterns();
-
-
 
 	// if a pattern with a matching slug exists in the theme, do work on it
 	foreach ($theme_patterns as $pattern) {
-		if (crc32($pattern['slug']) === $encoded_pattern_slug) {
-
-			$pattern_slug = $pattern['slug'];
+		if ($pattern['slug'] === $pattern_slug) {
 
 			// if the request is a GET, return the pattern content
 			if ($request->get_method() === 'GET') {
-				return rest_ensure_response($pattern);
+				return rest_ensure_response(format_pattern_for_response($pattern));
 			}
+
 			// if the request is a PUT or POST, create/update the pattern content file
 			if ($request->get_method() === 'PUT' || $request->get_method() === 'POST') {
-				// die('trying' . var_dump($pattern));
 				$block_content = $request->get_param('content');
-				$categories = implode(', ',$pattern['wp_pattern_category']);
-				$synced_status = $pattern['wp_pattern_sync_status'] === '' ? 'yes' : 'no';
+				$synced_status = $pattern['synced'] === 'yes' ? 'Synced: yes' : '';
 				$file_content = <<<PHP
 				<?php
 				/**
-				* Title: {$pattern['title']['raw']}
-				* Slug: {$pattern['slug']}
-				* Categories: {$categories}
-				* Synced: {$synced_status}
-				*/
+				 * Title: {$pattern['title']}
+				 * Slug: {$pattern['slug']}
+				 * Categories: {$pattern['categories']}
+				 * {$synced_status}
+				 */
 				?>
 				{$block_content}
 				PHP;
 
-				file_put_contents($pattern['file_path'], $file_content);
+				file_put_contents($pattern['pattern_file'], $file_content);
 
-				$pattern['content']['raw'] = $block_content;
-				return rest_ensure_response($pattern);
+				$pattern['content'] = $block_content;
+
+				return rest_ensure_response(format_pattern_for_response($pattern));
 			}
 			// if the request is a DELETE, delete the pattern content file
 			if ($request->get_method() === 'DELETE') {
 				unlink($pattern['file_path']);
-				return rest_ensure_response($pattern);
+				return rest_ensure_response(format_pattern_for_response($pattern));
 			}
 
 		}
@@ -235,6 +263,8 @@ function CBT_filter_block_update($result, $server, $request)
 
 // don't register the theme block patterns
 remove_action('init', '_register_theme_block_patterns');
+add_action('init', 'CBT_register_theme_synced_block_patterns');
+
 // add the theme block patterns to the block collection
 add_filter('rest_post_dispatch', 'CBT_filter_blocks_api_response', 10, 3);
 add_filter( 'rest_pre_dispatch', 'CBT_filter_block_update', 10, 3 );
