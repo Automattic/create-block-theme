@@ -76,7 +76,8 @@ class CBT_Theme_Patterns {
 	public static function replace_local_synced_pattern_references( $pattern ) {
 
 		// If we save patterns we have to update the templates (or none of the templates).
-		CBT_Theme_Templates::add_templates_to_local( 'all', null, null, null );
+		// However, we can't save it here because it will overwrite changes we make to the templates RE: Patterns.
+		// CBT_Theme_Templates::add_templates_to_local( 'all', null, null, null );
 
 		// List all template and pattern files in the theme
 		$base_dir       = get_stylesheet_directory();
@@ -85,10 +86,14 @@ class CBT_Theme_Patterns {
 		$templates      = glob( $base_dir . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . '*.html' );
 		$template_parts = glob( $base_dir . DIRECTORY_SEPARATOR . 'template-parts' . DIRECTORY_SEPARATOR . '*.html' );
 
+
+
+		$needle = 'wp:block {"ref":' . $pattern['id'];
+		$replacement = 'wp:pattern {"slug":"' . $pattern['slug'] . '"';
 		// Replace references to the local patterns in the theme
 		foreach ( array_merge( $patterns, $templates, $template_parts, $synced_patterns ) as $file ) {
 			$file_content = file_get_contents( $file );
-			$file_content = str_replace( 'wp:block {"ref":' . $pattern->id . '}', 'wp:pattern {"slug":"' . $pattern->slug . '"}', $file_content );
+			$file_content = str_replace( $needle, $replacement, $file_content );
 			file_put_contents( $file, $file_content );
 		}
 
@@ -151,6 +156,15 @@ class CBT_Theme_Patterns {
 				}
 			}
 		}
+
+		// now replace all instances of synced blocks with pattern blocks
+		$patterns = CBT_get_theme_block_patterns();
+		$patterns = array_filter($patterns, function ($pattern) {
+			return $pattern['synced'] === 'yes';
+		});
+		foreach ($patterns as $pattern) {
+			self::replace_local_synced_pattern_references($pattern);
+		}
 	}
 
 	public static function add_synced_pattern_to_theme($pattern)
@@ -167,7 +181,7 @@ class CBT_Theme_Patterns {
 		file_put_contents( $pattern_file, $pattern->content);
 
 		// Replace references in the templates
-		self::replace_local_synced_pattern_references($pattern);
+		// self::replace_local_synced_pattern_references($pattern);
 
 		// Remove it from the database to ensure that these patterns are loaded from the theme.
 		//wp_delete_post($pattern->id, true);

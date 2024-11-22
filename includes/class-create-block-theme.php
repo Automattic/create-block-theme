@@ -175,6 +175,15 @@ function CBT_get_theme_block_patterns()
 			$pattern_data['pattern_file'] = $pattern_file;
 			$pattern_data['content'] = CBT_render_pattern($pattern_file);
 
+			// if the pattern is synced add the ID
+
+			if ( $pattern_data['synced'] === 'yes' ) {
+				$pattern_post = get_page_by_path(sanitize_title($pattern_data['slug']), OBJECT, 'wp_block');
+				if ($pattern_post) {
+					$pattern_data['id'] = $pattern_post->ID;
+				}
+			}
+
 			$all_patterns[] = $pattern_data;
 		}
 	}
