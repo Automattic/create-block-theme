@@ -14,7 +14,7 @@ class CBT_Synced_Pattern_Loader
 	public function __construct()
 	{
 		// don't register the theme block patterns
-		remove_action('init', [$this, '_register_theme_block_patterns']);
+		remove_action('init', '_register_theme_block_patterns');
 		add_action('init', [$this, 'CBT_register_theme_synced_block_patterns']);
 
 		// add the theme block patterns to the block collection
@@ -38,9 +38,7 @@ class CBT_Synced_Pattern_Loader
 				if ($pattern_post) {
 					$post_id = $pattern_post->ID;
 					// the synced pattern already exists
-					// should we update it?
-					// That's the question of the day!
-					// update the post with the content
+					// update the post with the content in the file
 					wp_update_post(array(
 						'ID' => $post_id,
 						'post_content' => $pattern['content'],
