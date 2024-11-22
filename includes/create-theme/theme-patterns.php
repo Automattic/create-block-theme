@@ -170,7 +170,15 @@ class CBT_Theme_Patterns {
 		self::replace_local_synced_pattern_references($pattern);
 
 		// Remove it from the database to ensure that these patterns are loaded from the theme.
-		wp_delete_post($pattern->id, true);
+		//wp_delete_post($pattern->id, true);
+		// leave the pattern in the database so that existing references to it remain valid
+		// update the post_name value to match the pattern slug
+		wp_update_post(
+			array(
+				'ID' => $pattern->id,
+				'post_name' => sanitize_title($pattern->slug),
+			)
+		);
 	}
 
 	public static function add_unsynced_pattern_to_theme($pattern)
