@@ -180,12 +180,6 @@ class CBT_Theme_Patterns {
 		// Create the pattern file.
 		file_put_contents( $pattern_file, $pattern->content);
 
-		// Replace references in the templates
-		// self::replace_local_synced_pattern_references($pattern);
-
-		// Remove it from the database to ensure that these patterns are loaded from the theme.
-		//wp_delete_post($pattern->id, true);
-		// leave the pattern in the database so that existing references to it remain valid
 		// update the post_name value to match the pattern slug
 		wp_update_post(
 			array(
