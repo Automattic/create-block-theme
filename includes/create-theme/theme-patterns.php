@@ -158,7 +158,7 @@ class CBT_Theme_Patterns {
 		}
 
 		// now replace all instances of synced blocks with pattern blocks
-		$patterns = CBT_get_theme_block_patterns();
+		$patterns = CBT_Synced_Pattern_Loader::CBT_get_theme_block_patterns();
 		$patterns = array_filter($patterns, function ($pattern) {
 			return $pattern['synced'] === 'yes';
 		});
