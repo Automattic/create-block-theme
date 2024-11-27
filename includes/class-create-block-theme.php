@@ -9,18 +9,19 @@
  * @author     WordPress.org
  */
 #[AllowDynamicProperties]
-class CBT_Plugin {
+class CBT_Plugin
+{
 
 	/**
 	 * Define the core functionality of the plugin.
 	 *
 	 * @since    0.0.2
 	 */
-	public function __construct() {
+	public function __construct()
+	{
 
 		$this->load_dependencies();
 		$this->define_admin_hooks();
-
 	}
 
 	/**
@@ -29,23 +30,24 @@ class CBT_Plugin {
 	 * @since    0.0.2
 	 * @access   private
 	 */
-	private function load_dependencies() {
+	private function load_dependencies()
+	{
 
 		/**
 		 * The class responsible for orchestrating the actions and filters of the
 		 * core plugin.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-create-block-theme-loader.php';
+		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-create-block-theme-loader.php';
 
 		/**
 		 * The class responsible for defining all actions that occur in the admin area.
 		 */
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-create-block-theme-api.php';
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-create-block-theme-editor-tools.php';
-		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-create-block-theme-admin-landing.php';
+		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-create-block-theme-api.php';
+		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-create-block-theme-editor-tools.php';
+		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-create-block-theme-admin-landing.php';
+		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-create-block-theme-synced-pattern-loader.php';
 
 		$this->loader = new CBT_Plugin_Loader();
-
 	}
 
 	/**
@@ -55,10 +57,12 @@ class CBT_Plugin {
 	 * @since    0.0.2
 	 * @access   private
 	 */
-	private function define_admin_hooks() {
+	private function define_admin_hooks()
+	{
 		$plugin_api    = new CBT_Theme_API();
 		$editor_tools  = new CBT_Editor_Tools();
 		$admin_landing = new CBT_Admin_Landing();
+		$synced_loader = new CBT_Synced_Pattern_Loader();
 	}
 
 	/**
@@ -66,7 +70,8 @@ class CBT_Plugin {
 	 *
 	 * @since    0.0.2
 	 */
-	public function run() {
+	public function run()
+	{
 		$this->loader->run();
 	}
 }

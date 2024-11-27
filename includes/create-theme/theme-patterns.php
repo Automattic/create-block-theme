@@ -30,12 +30,14 @@ class CBT_Theme_Patterns {
 		$pattern_category_list = get_the_terms( $pattern->id, 'wp_pattern_category' );
 		$pattern->categories   = ! empty( $pattern_category_list ) ? join( ', ', wp_list_pluck( $pattern_category_list, 'name' ) ) : '';
 		$pattern->sync_status  = get_post_meta( $pattern->id, 'wp_pattern_sync_status', true );
+		$pattern->is_synced    = $pattern->sync_status === 'unsynced' ? 'no' : 'yes';
 		$pattern->content      = <<<PHP
 		<?php
 		/**
 		 * Title: {$pattern->title}
 		 * Slug: {$pattern->slug}
 		 * Categories: {$pattern->categories}
+		 * Synced: {$pattern->is_synced}
 		 */
 		?>
 		{$pattern_post->post_content}
@@ -71,39 +73,31 @@ class CBT_Theme_Patterns {
 		return '<!-- wp:pattern ' . $attributes_json . ' /-->';
 	}
 
-	public static function replace_local_pattern_references( $pattern ) {
-		// Find any references to pattern in templates
-		$templates_to_update = array();
-		$args                = array(
-			'post_type'      => array( 'wp_template', 'wp_template_part' ),
-			'posts_per_page' => -1,
-			's'              => 'wp:block {"ref":' . $pattern->id . '}',
-		);
-		$find_pattern_refs   = new WP_Query( $args );
-		if ( $find_pattern_refs->have_posts() ) {
-			foreach ( $find_pattern_refs->posts as $post ) {
-				$slug = $post->post_name;
-				array_push( $templates_to_update, $slug );
-			}
-		}
-		$templates_to_update = array_unique( $templates_to_update );
+	public static function replace_local_synced_pattern_references( $pattern ) {
 
-		// Only update templates that reference the pattern
-		CBT_Theme_Templates::add_templates_to_local( 'all', null, null, $options, $templates_to_update );
+		// If we save patterns we have to update the templates (or none of the templates).
+		// However, we can't save it here because it will overwrite changes we make to the templates RE: Patterns.
+		// CBT_Theme_Templates::add_templates_to_local( 'all', null, null, null );
 
 		// List all template and pattern files in the theme
 		$base_dir       = get_stylesheet_directory();
 		$patterns       = glob( $base_dir . DIRECTORY_SEPARATOR . 'patterns' . DIRECTORY_SEPARATOR . '*.php' );
+		$synced_patterns = glob( $base_dir . DIRECTORY_SEPARATOR . 'synced-patterns' . DIRECTORY_SEPARATOR . '*.php' );
 		$templates      = glob( $base_dir . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . '*.html' );
 		$template_parts = glob( $base_dir . DIRECTORY_SEPARATOR . 'template-parts' . DIRECTORY_SEPARATOR . '*.html' );
 
+
+
+		$needle = 'wp:block {"ref":' . $pattern['id'];
+		$replacement = 'wp:pattern {"slug":"' . $pattern['slug'] . '"';
 		// Replace references to the local patterns in the theme
-		foreach ( array_merge( $patterns, $templates, $template_parts ) as $file ) {
+		foreach ( array_merge( $patterns, $templates, $template_parts, $synced_patterns ) as $file ) {
 			$file_content = file_get_contents( $file );
-			$file_content = str_replace( 'wp:block {"ref":' . $pattern->id . '}', 'wp:pattern {"slug":"' . $pattern->slug . '"}', $file_content );
+			$file_content = str_replace( $needle, $replacement, $file_content );
 			file_put_contents( $file, $file_content );
 		}
 
+		// if we clear the template customizations for all templates then we have to SAVE all templates.
 		CBT_Theme_Templates::clear_user_templates_customizations();
 		CBT_Theme_Templates::clear_user_template_parts_customizations();
 	}
@@ -139,9 +133,6 @@ class CBT_Theme_Patterns {
 	 * Copy the local patterns as well as any media to the theme filesystem.
 	 */
 	public static function add_patterns_to_theme( $options = null ) {
-		$base_dir     = get_stylesheet_directory();
-		$patterns_dir = $base_dir . DIRECTORY_SEPARATOR . 'patterns';
-
 		$pattern_query = new WP_Query(
 			array(
 				'post_type'      => 'wp_block',
@@ -150,53 +141,68 @@ class CBT_Theme_Patterns {
 		);
 
 		if ( $pattern_query->have_posts() ) {
-			// If there is no patterns folder, create it.
-			if ( ! is_dir( $patterns_dir ) ) {
-				wp_mkdir_p( $patterns_dir );
-			}
-
 			foreach ( $pattern_query->posts as $pattern ) {
 				$pattern        = self::pattern_from_wp_block( $pattern );
 				$pattern        = self::prepare_pattern_for_export( $pattern, $options );
-				$pattern_exists = false;
 
 				// Check pattern is synced before adding to theme.
-				if ( 'unsynced' !== $pattern->sync_status ) {
-					// Check pattern name doesn't already exist before creating the file.
-					$existing_patterns = glob( $patterns_dir . DIRECTORY_SEPARATOR . '*.php' );
-					foreach ( $existing_patterns as $existing_pattern ) {
-						if ( strpos( $existing_pattern, $pattern->name . '.php' ) !== false ) {
-							$pattern_exists = true;
-						}
-					}
 
-					if ( $pattern_exists ) {
-						return new WP_Error(
-							'pattern_already_exists',
-							sprintf(
-								/* Translators: Pattern name. */
-								__(
-									'A pattern with this name already exists: "%s".',
-									'create-block-theme'
-								),
-								$pattern->name
-							)
-						);
-					}
+				if ( 'unsynced' === $pattern->sync_status ) {
+						self::add_unsynced_pattern_to_theme( $pattern );
+				}
+				else {
+						self::add_synced_pattern_to_theme( $pattern );
 
-					// Create the pattern file.
-					$pattern_file = $patterns_dir . $pattern->name . '.php';
-					file_put_contents(
-						$patterns_dir . DIRECTORY_SEPARATOR . $pattern->name . '.php',
-						$pattern->content
-					);
-
-					self::replace_local_pattern_references( $pattern );
-
-					// Remove it from the database to ensure that these patterns are loaded from the theme.
-					wp_delete_post( $pattern->id, true );
 				}
 			}
 		}
+
+		// now replace all instances of synced blocks with pattern blocks
+		$patterns = CBT_Synced_Pattern_Loader::CBT_get_theme_block_patterns();
+		$patterns = array_filter($patterns, function ($pattern) {
+			return $pattern['synced'] === 'yes';
+		});
+		foreach ($patterns as $pattern) {
+			self::replace_local_synced_pattern_references($pattern);
+		}
+	}
+
+	public static function add_synced_pattern_to_theme($pattern)
+	{
+		$patterns_dir = get_stylesheet_directory() . DIRECTORY_SEPARATOR . 'patterns' . DIRECTORY_SEPARATOR;
+		$pattern_file = $patterns_dir . $pattern->name . '.php';
+
+		// If there is no patterns folder, create it.
+		if ( ! is_dir( $patterns_dir ) ) {
+			wp_mkdir_p( $patterns_dir );
+		}
+
+		// Create the pattern file.
+		file_put_contents( $pattern_file, $pattern->content);
+
+		// update the post_name value to match the pattern slug
+		wp_update_post(
+			array(
+				'ID' => $pattern->id,
+				'post_name' => sanitize_title($pattern->slug),
+			)
+		);
+	}
+
+	public static function add_unsynced_pattern_to_theme($pattern)
+	{
+		$patterns_dir = get_stylesheet_directory() . DIRECTORY_SEPARATOR . 'patterns' . DIRECTORY_SEPARATOR;
+		$pattern_file = $patterns_dir . $pattern->name . '.php';
+
+		// If there is no patterns folder, create it.
+		if ( ! is_dir( $patterns_dir ) ) {
+			wp_mkdir_p( $patterns_dir );
+		}
+
+		// Create the pattern file.
+		file_put_contents( $pattern_file, $pattern->content);
+
+		// Remove it from the database to ensure that these patterns are loaded from the theme.
+		wp_delete_post($pattern->id, true);
 	}
 }
