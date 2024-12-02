@@ -79,6 +79,10 @@ function cbt_augment_resolver_with_utilities() {
 
 			$data = $theme->get_data();
 
+			// move Font size preset settings from 'default' to 'theme' to ensure
+			// any changes made via Global Styles are saved back to the theme
+			$data = static::font_size_preset_changes( $data );
+
 			// Add the schema.
 			if ( empty( $schema ) ) {
 				global $wp_version;
@@ -106,6 +110,25 @@ function cbt_augment_resolver_with_utilities() {
 				: parent::get_user_data();
 		}
 
+		/**
+		 * This checks if the fontSizes has been set and saved to the database.
+		 * If it has then the $data variable is changed and will later be used to save back the theme.
+		 * A method is used from the parent class if it exists to get any user changed settings.
+		 *
+		 * @param array $data
+		 * @return array $data
+		 */
+		public static function font_size_preset_changes( $data ) {
+			$user_data = parent::get_user_data();
+			if ( method_exists( $user_data, 'get_settings' ) ) {
+				$user_data = $user_data->get_settings();
+				if ( isset( $user_data['typography']['fontSizes'] ) && ! empty( $user_data['typography']['fontSizes'] ) ) {
+					$data['settings']['typography']['defaultFontSizes'] = false;
+					$data['settings']['typography']['fontSizes']        = $user_data['typography']['fontSizes']['default'];
+				}
+			}
+			return $data;
+		}
 		/**
 		 * Stringify the array data.
 		 *
