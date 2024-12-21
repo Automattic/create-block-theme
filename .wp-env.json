@@ -1,4 +1,5 @@
 {
+	"$schema": "https://schemas.wp.org/trunk/wp-env.json",
 	"core": "WordPress/WordPress",
 	"port": 8988,
 	"testsPort": 8989,
@@ -6,5 +7,13 @@
 	"config": {
 		"WP_UPLOAD_MAX_FILESIZE": "128M",
 		"WP_MEMORY_LIMIT": "256M"
+	},
+	"env": {
+		"development": {
+			"phpmyadminPort": 9000
+		},
+		"tests": {
+			"phpmyadminPort": 9001
+		}
 	}
 }
