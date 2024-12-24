@@ -30,7 +30,7 @@ composer.json
 composer.lock
 package-lock.json
 webpack.config.js
-.phpcs.xml.dist
+phpcs.xml.dist
 phpunit.xml.dist
 tests/
 bin/
