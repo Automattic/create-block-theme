@@ -33,7 +33,6 @@ class CBT_Theme_Media {
 			// Gets the absolute URLs of img in these blocks
 			if ( 'core/image' === $block['blockName'] ||
 				'core/video' === $block['blockName'] ||
-				'core/cover' === $block['blockName'] ||
 				'core/media-text' === $block['blockName']
 			) {
 				$html = new WP_HTML_Tag_Processor( $block['innerHTML'] );
@@ -58,19 +57,8 @@ class CBT_Theme_Media {
 
 			// Gets the absolute URLs of background images in these blocks
 			if ( 'core/cover' === $block['blockName'] ) {
-				$html = new WP_HTML_Tag_Processor( $block['innerHTML'] );
-				while ( $html->next_tag( 'div' ) ) {
-					$style = $html->get_attribute( 'style' );
-					if ( $style ) {
-						$matches = array();
-						preg_match( '/background-image: url\((.*)\)/', $style, $matches );
-						if ( isset( $matches[1] ) ) {
-							$url = $matches[1];
-							if ( CBT_Theme_Utils::is_absolute_url( $url ) ) {
-								$media[] = $url;
-							}
-						}
-					}
+				if ( isset( $block['attrs']['url'] ) && CBT_Theme_Utils::is_absolute_url( $block['attrs']['url'] ) ) {
+					$media[] = $block['attrs']['url'];
 				}
 			}
 

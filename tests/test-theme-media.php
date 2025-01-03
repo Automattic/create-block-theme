@@ -39,6 +39,21 @@ class Test_Create_Block_Theme_Media extends WP_UnitTestCase {
 		$this->assertStringContainsString( '/assets/images', $new_template->content );
 	}
 
+	public function test_make_cover_block_local_with_background_image() {
+		$template          = new stdClass();
+		$template->content = '
+			<!-- wp:cover {"url":"http://example.com/image.jpg"} -->
+			<div class="wp-block-cover"><div class="wp-block-cover__image-background" style="background-image:url(http://example.com/image.jpg)"></div></div>
+			<!-- /wp:cover -->
+		';
+		$new_template      = CBT_Theme_Media::make_template_images_local( $template );
+
+		// The image should be replaced with a relative URL
+		$this->assertStringNotContainsString( 'http://example.com/image.jpg', $new_template->content );
+		$this->assertStringContainsString( 'get_template_directory_uri', $new_template->content );
+		$this->assertStringContainsString( '/assets/images', $new_template->content );
+	}
+
 	public function test_template_with_media_correctly_prepared() {
 		$template          = new stdClass();
 		$template->slug    = 'test-template';
