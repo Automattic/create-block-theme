@@ -39,6 +39,7 @@ export const SaveThemePanel = () => {
 			removeNavRefs: _preference?.removeNavRefs ?? false,
 			localizeText: _preference?.localizeText ?? false,
 			localizeImages: _preference?.localizeImages ?? false,
+			removeTaxQuery: _preference?.removeTaxQuery ?? false,
 		};
 	}, [] );
 
@@ -220,6 +221,24 @@ export const SaveThemePanel = () => {
 						preference.removeNavRefs
 					}
 					onChange={ () => handleTogglePreference( 'removeNavRefs' ) }
+				/>
+				<CheckboxControl
+					__nextHasNoMarginBottom
+					label={ __(
+						'Remove Taxonomy Query',
+						'create-block-theme'
+					) }
+					help={ __(
+						'Remove the taxonomy query from the query loop block attributes.',
+						'create-block-theme'
+					) }
+					disabled={
+						! preference.saveTemplates && ! preference.savePatterns
+					}
+					checked={ preference.removeTaxQuery }
+					onChange={ () =>
+						handleTogglePreference( 'removeTaxQuery' )
+					}
 				/>
 				<Button
 					variant="primary"
