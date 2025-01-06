@@ -19,9 +19,13 @@
 		"npm": ">=10.2.3"
 	},
 	"dependencies": {
+		"@codemirror/basic-setup": "^0.20.0",
 		"@codemirror/lang-json": "^6.0.1",
+		"@codemirror/state": "^6.4.1",
+		"@codemirror/view": "^6.33.0",
 		"@uiw/react-codemirror": "^4.23.1",
 		"@wordpress/icons": "^10.7.0",
+		"diff": "^7.0.0",
 		"lib-font": "^2.4.3"
 	},
 	"devDependencies": {

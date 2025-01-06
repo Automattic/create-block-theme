@@ -1,10 +1,4 @@
 /**
- * External dependencies
- */
-import CodeMirror from '@uiw/react-codemirror';
-import { json } from '@codemirror/lang-json';
-
-/**
  * WordPress dependencies
  */
 import { __, sprintf } from '@wordpress/i18n';
@@ -16,6 +10,7 @@ import { useSelect } from '@wordpress/data';
  * Internal dependencies
  */
 import { fetchThemeJson } from '../resolvers';
+import { CodeMirrorDiffViewer } from './code-mirror-diff-viewer';
 
 const ThemeJsonEditorModal = ( { onRequestClose } ) => {
 	const [ themeData, setThemeData ] = useState( '' );
@@ -42,12 +37,7 @@ const ThemeJsonEditorModal = ( { onRequestClose } ) => {
 			onRequestClose={ onRequestClose }
 			className="create-block-theme__theme-json-modal"
 		>
-			<CodeMirror
-				extensions={ [ json() ] }
-				value={ themeData }
-				onChange={ handleSave }
-				readOnly
-			/>
+			<CodeMirrorDiffViewer oldCode={JSON.stringify(themeData, null, 2)} newCode={JSON.stringify(themeData, null, 2)} />
 		</Modal>
 	);
 };
