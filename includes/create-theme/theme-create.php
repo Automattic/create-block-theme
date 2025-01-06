@@ -10,7 +10,7 @@ class CBT_Theme_Create {
 		// Default values for cloned themes
 		$theme['is_cloned_theme'] = true;
 		$theme['version']         = '1.0';
-		$theme['tags_custom']     = implode( ', ', wp_get_theme()->get( 'Tags' ) );
+		$theme['tags_custom']     = wp_get_theme()->get( 'Tags' );
 
 		// Create theme directory.
 		$new_theme_path = get_theme_root() . DIRECTORY_SEPARATOR . $theme['slug'];

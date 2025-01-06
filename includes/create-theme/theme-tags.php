@@ -19,7 +19,7 @@ class CBT_Theme_Tags {
 			$theme['tags-layout'] ?? array(),
 			$theme['tags-features'] ?? array(),
 		);
-		$custom_tags          = array_map( 'trim', explode( ',', $theme['tags_custom'] ?? '' ) );
+		$custom_tags          = array_map( 'trim', $theme['tags_custom'] ?? array() );
 		$tags                 = array_unique( array_merge( $checkbox_tags_merged, $custom_tags ) );
 
 		return implode( ', ', $tags );

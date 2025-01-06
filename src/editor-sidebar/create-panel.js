@@ -42,7 +42,7 @@ export const CreateThemePanel = ( { createType } ) => {
 		uri: '',
 		author: '',
 		author_uri: '',
-		tags_custom: '',
+		tags_custom: [],
 		requires_wp: '',
 	} );
 

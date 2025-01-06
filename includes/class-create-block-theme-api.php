@@ -462,7 +462,7 @@ class CBT_Theme_API {
 		$sanitized_theme['uri']                 = sanitize_text_field( $theme['uri'] ?? '' );
 		$sanitized_theme['author']              = sanitize_text_field( $theme['author'] ?? '' );
 		$sanitized_theme['author_uri']          = sanitize_text_field( $theme['author_uri'] ?? '' );
-		$sanitized_theme['tags_custom']         = sanitize_text_field( $theme['tags_custom'] ?? '' );
+		$sanitized_theme['tags_custom']         = array_map( 'sanitize_text_field', $theme['tags_custom'] ?? array() );
 		$sanitized_theme['version']             = sanitize_text_field( $theme['version'] ?? '' );
 		$sanitized_theme['screenshot']          = sanitize_text_field( $theme['screenshot'] ?? '' );
 		$sanitized_theme['requires_wp']         = sanitize_text_field( $theme['requires_wp'] ?? '' );

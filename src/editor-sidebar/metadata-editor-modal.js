@@ -52,7 +52,7 @@ export const ThemeMetadataEditorModal = ( { onRequestClose } ) => {
 		requires_wp: '',
 		author: '',
 		author_uri: '',
-		tags_custom: '',
+		tags_custom: [],
 		recommended_plugins: '',
 		font_credits: '',
 		image_credits: '',
@@ -72,7 +72,7 @@ export const ThemeMetadataEditorModal = ( { onRequestClose } ) => {
 			requires_wp: themeData.requires_wp,
 			author: themeData.author.raw,
 			author_uri: themeData.author_uri.raw,
-			tags_custom: themeData.tags.rendered,
+			tags_custom: themeData.tags.raw,
 			screenshot: themeData.screenshot,
 			recommended_plugins: readmeData.recommended_plugins,
 			font_credits: readmeData.fonts,
@@ -124,7 +124,7 @@ export const ThemeMetadataEditorModal = ( { onRequestClose } ) => {
 	};
 
 	const onChangeTags = ( newTags ) => {
-		setTheme( { ...theme, tags_custom: newTags.join( ', ' ) } );
+		setTheme( { ...theme, tags_custom: newTags } );
 	};
 
 	const onUpdateImage = ( image ) => {
@@ -234,9 +234,7 @@ export const ThemeMetadataEditorModal = ( { onRequestClose } ) => {
 				<FormTokenField
 					__nextHasNoMarginBottom
 					label={ __( 'Theme tags', 'create-block-theme' ) }
-					value={
-						theme.tags_custom ? theme.tags_custom.split( ', ' ) : []
-					}
+					value={ theme.tags_custom || [] }
 					onChange={ onChangeTags }
 				/>
 				<HStack
