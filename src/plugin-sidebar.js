@@ -4,14 +4,12 @@
 import { useState } from '@wordpress/element';
 import { registerPlugin } from '@wordpress/plugins';
 import { PluginSidebar, PluginSidebarMoreMenuItem } from '@wordpress/editor';
-import { __, _x } from '@wordpress/i18n';
+import { __, _x, isRTL } from '@wordpress/i18n';
 import { useDispatch } from '@wordpress/data';
 import { store as noticesStore } from '@wordpress/notices';
 import {
 	// eslint-disable-next-line @wordpress/no-unsafe-wp-apis
 	__experimentalVStack as VStack,
-	// eslint-disable-next-line @wordpress/no-unsafe-wp-apis
-	__experimentalSpacer as Spacer,
 	// eslint-disable-next-line @wordpress/no-unsafe-wp-apis
 	__experimentalNavigatorProvider as NavigatorProvider,
 	// eslint-disable-next-line @wordpress/no-unsafe-wp-apis
@@ -24,6 +22,7 @@ import {
 	__experimentalText as Text,
 	// eslint-disable-next-line @wordpress/no-unsafe-wp-apis
 	__experimentalDivider as Divider,
+	// eslint-disable-next-line @wordpress/no-unsafe-wp-apis
 	Button,
 	Icon,
 	FlexItem,
@@ -35,6 +34,7 @@ import {
 	download,
 	edit,
 	code,
+	chevronLeft,
 	chevronRight,
 	addCard,
 	blockMeta,
@@ -57,6 +57,23 @@ import downloadFile from './utils/download-file';
 import AboutPlugin from './editor-sidebar/about';
 import ResetTheme from './editor-sidebar/reset-theme';
 import './plugin-styles.scss';
+
+function PluginSidebarItem( { icon, path, children, ...props } ) {
+	const ItemWrapper = path ? NavigatorButton : Button;
+	return (
+		<ItemWrapper { ...props } path={ path }>
+			<HStack justify="flex-start">
+				<HStack justify="flex-start">
+					<Icon icon={ icon } />
+					<FlexItem>{ children }</FlexItem>
+				</HStack>
+				{ path && (
+					<Icon icon={ isRTL() ? chevronLeft : chevronRight } />
+				) }
+			</HStack>
+		</ItemWrapper>
+	);
+}
 
 const CreateBlockThemePlugin = () => {
 	const [ isEditorOpen, setIsEditorOpen ] = useState( false );
@@ -111,34 +128,22 @@ const CreateBlockThemePlugin = () => {
 					<NavigatorScreen path="/">
 						<PanelBody>
 							<VStack spacing={ 0 }>
-								<NavigatorButton path="/save" icon={ copy }>
-									<Spacer />
-									<HStack>
-										<FlexItem>
-											{ __(
-												'Save Changes to Theme',
-												'create-block-theme'
-											) }
-										</FlexItem>
-										<Icon icon={ chevronRight } />
-									</HStack>
-								</NavigatorButton>
-								<NavigatorButton
+								<PluginSidebarItem path="/save" icon={ copy }>
+									{ __(
+										'Save Changes to Theme',
+										'create-block-theme'
+									) }
+								</PluginSidebarItem>
+								<PluginSidebarItem
 									path="/create/variation"
 									icon={ blockMeta }
 								>
-									<Spacer />
-									<HStack>
-										<FlexItem>
-											{ __(
-												'Create Theme Variation',
-												'create-block-theme'
-											) }
-										</FlexItem>
-										<Icon icon={ chevronRight } />
-									</HStack>
-								</NavigatorButton>
-								<Button
+									{ __(
+										'Create Theme Variation',
+										'create-block-theme'
+									) }
+								</PluginSidebarItem>
+								<PluginSidebarItem
 									icon={ edit }
 									onClick={ () =>
 										setIsMetadataEditorOpen( true )
@@ -148,8 +153,8 @@ const CreateBlockThemePlugin = () => {
 										'Edit Theme Metadata',
 										'create-block-theme'
 									) }
-								</Button>
-								<Button
+								</PluginSidebarItem>
+								<PluginSidebarItem
 									icon={ code }
 									onClick={ () => setIsEditorOpen( true ) }
 								>
@@ -157,8 +162,8 @@ const CreateBlockThemePlugin = () => {
 										'View theme.json',
 										'create-block-theme'
 									) }
-								</Button>
-								<Button
+								</PluginSidebarItem>
+								<PluginSidebarItem
 									icon={ code }
 									onClick={ () =>
 										setIsGlobalStylesEditorOpen( true )
@@ -168,76 +173,44 @@ const CreateBlockThemePlugin = () => {
 										'View Custom Styles',
 										'create-block-theme'
 									) }
-								</Button>
-								<Button
+								</PluginSidebarItem>
+								<PluginSidebarItem
 									icon={ download }
 									onClick={ () => handleExportClick() }
 								>
 									{ __( 'Export Zip', 'create-block-theme' ) }
-								</Button>
+								</PluginSidebarItem>
 								<Divider />
-								<NavigatorButton
+								<PluginSidebarItem
 									path="/create/blank"
 									icon={ addCard }
 								>
-									<Spacer />
-									<HStack>
-										<FlexItem>
-											{ __(
-												'Create Blank Theme',
-												'create-block-theme'
-											) }
-										</FlexItem>
-										<Icon icon={ chevronRight } />
-									</HStack>
-								</NavigatorButton>
-								<NavigatorButton path="/clone" icon={ copy }>
-									<Spacer />
-									<HStack>
-										<FlexItem>
-											{ __(
-												'Create Theme',
-												'create-block-theme'
-											) }
-										</FlexItem>
-										<Icon icon={ chevronRight } />
-									</HStack>
-								</NavigatorButton>
+									{ __(
+										'Create Blank Theme',
+										'create-block-theme'
+									) }
+								</PluginSidebarItem>
+								<PluginSidebarItem path="/clone" icon={ copy }>
+									{ __(
+										'Create Theme',
+										'create-block-theme'
+									) }
+								</PluginSidebarItem>
 
 								<Divider />
 
-								<NavigatorButton path="/reset" icon={ trash }>
-									<Spacer />
-									<HStack>
-										<FlexItem>
-											{ __(
-												'Reset Theme',
-												'create-block-theme'
-											) }
-										</FlexItem>
-										<Icon icon={ chevronRight } />
-									</HStack>
-								</NavigatorButton>
+								<PluginSidebarItem path="/reset" icon={ trash }>
+									{ __(
+										'Reset Theme',
+										'create-block-theme'
+									) }
+								</PluginSidebarItem>
 
 								<Divider />
 
-								<NavigatorButton
-									path="/about"
-									icon={ help }
-									className={
-										'create-block-theme__plugin-sidebar__about-button'
-									}
-								>
-									<Spacer />
-									<HStack>
-										<FlexItem>
-											{ __(
-												'Help',
-												'create-block-theme'
-											) }
-										</FlexItem>
-									</HStack>
-								</NavigatorButton>
+								<PluginSidebarItem path="/about" icon={ help }>
+									{ __( 'Help', 'create-block-theme' ) }
+								</PluginSidebarItem>
 							</VStack>
 						</PanelBody>
 					</NavigatorScreen>
@@ -258,24 +231,18 @@ const CreateBlockThemePlugin = () => {
 									) }
 								</Text>
 								<Divider />
-								<NavigatorButton
+								<PluginSidebarItem
 									path="/clone/create"
 									icon={ copy }
 									onClick={ () => {
 										setCloneCreateType( 'createClone' );
 									} }
 								>
-									<Spacer />
-									<HStack>
-										<FlexItem>
-											{ __(
-												'Clone Theme',
-												'create-block-theme'
-											) }
-										</FlexItem>
-										<Icon icon={ chevronRight } />
-									</HStack>
-								</NavigatorButton>
+									{ __(
+										'Clone Theme',
+										'create-block-theme'
+									) }
+								</PluginSidebarItem>
 								<Text variant="muted">
 									{ __(
 										'Create a clone of this theme with a new name. The user changes will be preserved in the new theme.',
@@ -283,24 +250,18 @@ const CreateBlockThemePlugin = () => {
 									) }
 								</Text>
 								<Divider />
-								<NavigatorButton
+								<PluginSidebarItem
 									path="/clone/create"
 									icon={ copy }
 									onClick={ () => {
 										setCloneCreateType( 'createChild' );
 									} }
 								>
-									<Spacer />
-									<HStack>
-										<FlexItem>
-											{ __(
-												'Create Child Theme',
-												'create-block-theme'
-											) }
-										</FlexItem>
-										<Icon icon={ chevronRight } />
-									</HStack>
-								</NavigatorButton>
+									{ __(
+										'Create Child Theme',
+										'create-block-theme'
+									) }
+								</PluginSidebarItem>
 								<Text variant="muted">
 									{ __(
 										'Create a child theme that uses this theme as a parent. This theme will remain unchanged and the user changes will be preserved in the new child theme.',
