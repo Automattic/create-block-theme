@@ -30,6 +30,7 @@ class CBT_Synced_Pattern_Loader
 
 			// if the pattern is hidden from the inserter just register it, don't add as a post
 			if ($pattern['inserter'] === 'no') {
+				$pattern['inserter'] = false;
 				register_block_pattern( $pattern['slug'], $pattern );
 				continue;
 			}
